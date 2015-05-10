@@ -3,6 +3,10 @@ using System.Windows.Input;
 
 namespace ECGAnalysisSystem.ViewModel
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class RelayCommand<T> : ICommand where T : class
     {
         private Action<T> methodToExecute;
