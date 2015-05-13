@@ -81,6 +81,8 @@
     <Compile Include="Interfaces\IDataParser.cs" />
     <Compile Include="Interfaces\IDataProvider.cs" />
     <Compile Include="Interfaces\IFilter.cs" />
+    <Compile Include="Interfaces\IQRSDetector.cs" />
+    <Compile Include="Detectors\QRSDetector.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />
     <Page Include="MainWindow.xaml">

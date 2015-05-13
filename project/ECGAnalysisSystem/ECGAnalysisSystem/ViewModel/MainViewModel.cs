@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using ECGAnalysisSystem.DataAccess;
+using ECGAnalysisSystem.Detectors;
 using ECGAnalysisSystem.Filters;
 using ECGAnalysisSystem.Interfaces;
 using MahApps.Metro.Controls;
@@ -23,8 +25,9 @@ namespace ECGAnalysisSystem.ViewModel
 
         private readonly IDataProvider dataProvider;
         private readonly IDataParser dataParser;
-        private IFilter hpfFilter;
-        private IFilter lpfFilter;
+        private readonly IFilter HPFFilter;
+        private readonly IFilter LPFFilter;
+        private readonly IQRSDetector QRSDetector;
 
         #endregion
 
@@ -40,6 +43,8 @@ namespace ECGAnalysisSystem.ViewModel
         public List<DataPoint> HPFFilteredData { get; private set; }
         public List<DataPoint> LPFFilteredData { get; private set; }
 
+        public List<DataPoint> QRSPoints { get; private set; } 
+
         #endregion
 
         #region Constructors
@@ -48,8 +53,9 @@ namespace ECGAnalysisSystem.ViewModel
         {
             dataProvider = new CSVLoader();
             dataParser = new CSVParser();
-            hpfFilter = new HighPassFilter();
-            lpfFilter = new LowPassFilter();
+            HPFFilter = new HighPassFilter();
+            LPFFilter = new LowPassFilter();
+            QRSDetector = new QRSDetector();
         }
 
         #endregion
@@ -69,6 +75,11 @@ namespace ECGAnalysisSystem.ViewModel
         public ICommand ApplyLPF
         {
             get { return new RelayCommand<object>(ApplyLPFExecute, () => true); }
+        }
+
+        public ICommand FindQRS
+        {
+            get { return new RelayCommand<object>(FindQRSExecute, () => true); }
         }
 
         #endregion
@@ -115,12 +126,28 @@ namespace ECGAnalysisSystem.ViewModel
 
         private void ApplyHPFExecute(object obj)
         {
-            HPFFilteredData = ((HighPassFilter) hpfFilter).Denoise(Data);
+            HPFFilteredData = ((HighPassFilter) HPFFilter).Denoise(Data);
         }
 
         private void ApplyLPFExecute(object obj)
         {
-            LPFFilteredData = ((LowPassFilter) lpfFilter).Denoise(HPFFilteredData);
+            LPFFilteredData = ((LowPassFilter) LPFFilter).Denoise(HPFFilteredData);
+        }
+
+        private void FindQRSExecute(object obj)
+        {
+            QRSPoints = QRSDetector.Detect(LPFFilteredData);
+            List<DataPoint> qrs = new List<DataPoint>();
+
+            for (int i = 0; i < QRSPoints.Count; i++)
+            {
+                if (Math.Abs(QRSPoints[i].Y - 1) < 0.0001)
+                {
+                    qrs.Add(new DataPoint(LPFFilteredData[i].X, LPFFilteredData[i].Y));
+                }
+            }
+
+            QRSPoints = qrs;
         }
 
         #endregion

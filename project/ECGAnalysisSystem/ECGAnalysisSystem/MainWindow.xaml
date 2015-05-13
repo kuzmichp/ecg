@@ -40,9 +40,10 @@
                     <oxy:LinearAxis Position="Bottom" Title="Elapsed Time [s]"/>
                 </oxy:Plot.Axes>
                 <oxy:Plot.Series>
-                    <oxy:LineSeries Title="Noised signal" Color="Red" ItemsSource="{Binding Data, Mode=TwoWay}"/>
+                    <oxy:LineSeries Title="Noised signal" Color="Blue" ItemsSource="{Binding Data, Mode=TwoWay}"/>
                     <oxy:LineSeries Title="HighPassFilter" Color="Green" ItemsSource="{Binding HPFFilteredData}"/>
                     <oxy:LineSeries Title="LowPassFilter" Color="Yellow" ItemsSource="{Binding LPFFilteredData}"/>
+                    <oxy:StairStepSeries Color="Red" ItemsSource="{Binding QRSPoints}"></oxy:StairStepSeries>
                 </oxy:Plot.Series>
             </oxy:Plot>
         </Grid>
@@ -68,7 +69,8 @@
                     Command="{Binding ApplyHPF}"/>
             <Button Grid.Column="5" Margin="3" BorderBrush="White" Style="{DynamicResource MetroCircleButtonStyle}"
                     Command="{Binding ApplyLPF}"/>
-            <Button Grid.Column="6" Margin="3" BorderBrush="White" Style="{DynamicResource MetroCircleButtonStyle}"/>
+            <Button Grid.Column="6" Margin="3" BorderBrush="White" Style="{DynamicResource MetroCircleButtonStyle}"
+                    Command="{Binding FindQRS}"/>
             <Button Grid.Column="8" Margin="3" BorderBrush="White" Style="{DynamicResource MetroCircleButtonStyle}"/>
             <Button Grid.Column="11" Margin="3" BorderBrush="White" Style="{DynamicResource MetroCircleButtonStyle}"/>
         </Grid>
