@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 using ECGAnalysisSystem.DataAccess;
 using ECGAnalysisSystem.Detectors;
@@ -34,6 +35,10 @@ namespace ECGAnalysisSystem.ViewModel
         #region UI Properties
 
         public bool PlotGridVisibility { get; private set; }
+        public bool StatisticsGridVisibility { get; private set; }
+        public List<StatisticsItem> StatisticsItems { get; set; }
+        public int HeartRate { get; set; }
+        public string Diagnosis { get; set; }
 
         #endregion
 
@@ -42,8 +47,7 @@ namespace ECGAnalysisSystem.ViewModel
         public List<DataPoint> Data { get; private set; }
         public List<DataPoint> HPFFilteredData { get; private set; }
         public List<DataPoint> LPFFilteredData { get; private set; }
-
-        public List<DataPoint> QRSPoints { get; private set; } 
+        public List<DataPoint> QRSPoints { get; private set; }
 
         #endregion
 
@@ -56,6 +60,12 @@ namespace ECGAnalysisSystem.ViewModel
             HPFFilter = new HighPassFilter();
             LPFFilter = new LowPassFilter();
             QRSDetector = new QRSDetector();
+
+            Data = new List<DataPoint>();
+            HPFFilteredData = new List<DataPoint>();
+            LPFFilteredData = new List<DataPoint>();
+            QRSPoints = new List<DataPoint>();
+            StatisticsItems = new List<StatisticsItem>();
         }
 
         #endregion
@@ -80,6 +90,16 @@ namespace ECGAnalysisSystem.ViewModel
         public ICommand FindQRS
         {
             get { return new RelayCommand<object>(FindQRSExecute, () => true); }
+        }
+
+        public ICommand Exit
+        {
+            get { return new RelayCommand<object>(delegate { Application.Current.Shutdown(); }, () => true); }
+        }
+
+        public ICommand Statistics
+        {
+            get { return new RelayCommand<object>(StatisticsExecute, () => true); }
         }
 
         #endregion
@@ -136,20 +156,68 @@ namespace ECGAnalysisSystem.ViewModel
 
         private void FindQRSExecute(object obj)
         {
-            QRSPoints = QRSDetector.Detect(LPFFilteredData);
-            List<DataPoint> qrs = new List<DataPoint>();
+            List<Tuple<DataPoint, int>> approxPeaks = QRSDetector.DetectPeaksNeighbourhood(LPFFilteredData);
+            QRSPoints = QRSDetector.DetectQRSPeaks(Data, approxPeaks);
+        }
 
-            for (int i = 0; i < QRSPoints.Count; i++)
+        private void StatisticsExecute(object obj)
+        {
+            foreach (var point in QRSPoints)
             {
-                if (Math.Abs(QRSPoints[i].Y - 1) < 0.0001)
-                {
-                    qrs.Add(new DataPoint(LPFFilteredData[i].X, LPFFilteredData[i].Y));
-                }
+                StatisticsItems.Add(new StatisticsItem(){ElapsedTime = String.Format("{0:0.00}", point.X), Amplitude = String.Format("{0:0.00}", point.Y)});
             }
 
-            QRSPoints = qrs;
+            HeartRate = CalculateHeartRate(QRSPoints);
+
+            if (HeartRate > 100)
+            {
+                Diagnosis = "(Tachycardia)";
+            }
+            else if (HeartRate < 60)
+            {
+                Diagnosis = "(Bradycardia)";
+            }
+            else
+            {
+                Diagnosis = "(Normal Rate)";
+            }
+
+            this.StatisticsGridVisibility = true;
+            this.PlotGridVisibility = false;
+        }
+
+        private int CalculateHeartRate(List<DataPoint> QRSPoints)
+        {
+            double intervalsLength = 0;
+            double avrgIntervalLenght = 0;
+
+            for (int i = 0; i < QRSPoints.Count - 1; i++)
+            {
+                intervalsLength += QRSPoints[i + 1].X - QRSPoints[i].X;
+            }
+
+            avrgIntervalLenght = intervalsLength/(QRSPoints.Count - 1);
+
+            return (int) (60/avrgIntervalLenght);
         }
 
         #endregion
+    }
+
+    class StatisticsItem
+    {
+        public string TimeLabel
+        {
+            get { return "Elapsed time:"; }
+        }
+
+        public string ElapsedTime { get; set; }
+
+        public string AmplitudeLabel
+        {
+            get { return "Amplitude:"; }
+        }
+
+        public string Amplitude { get; set; } 
     }
 }

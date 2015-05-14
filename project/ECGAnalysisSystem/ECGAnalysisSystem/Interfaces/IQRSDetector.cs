@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
 using OxyPlot;
 
 namespace ECGAnalysisSystem.Interfaces
@@ -16,6 +14,14 @@ namespace ECGAnalysisSystem.Interfaces
         /// </summary>
         /// <param name="filteredData"></param>
         /// <returns></returns>
-        List<DataPoint> Detect(List<DataPoint> filteredData);
+        List<Tuple<DataPoint, int>> DetectPeaksNeighbourhood(List<DataPoint> filteredData);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="inputData"></param>
+        /// <param name="approxPeaks"></param>
+        /// <returns></returns>
+        List<DataPoint> DetectQRSPeaks(List<DataPoint> inputData, List<Tuple<DataPoint, int>> approxPeaks);
     }
 }
